@@ -30,13 +30,13 @@ public class StructConverter {
     public static Struct convertElasticDocument2AvroStruct(Map<String, Object> doc, Schema schema) {
 
         Struct struct = new Struct(schema);
-        convertDocumentStruct("",doc, struct,schema);
+        convertDocumentStruct(doc, struct,schema);
         return struct;
 
     }
 
 
-    private static void convertDocumentStruct(String prefixName, Map<String, Object> doc, Struct struct, Schema schema) {
+    private static void convertDocumentStruct(Map<String, Object> doc, Struct struct, Schema schema) {
 
         doc.keySet().forEach(
                 k -> {
@@ -47,6 +47,8 @@ public class StructConverter {
                         struct.put(Utils.filterAvroName(k), v);
                     } else if (v instanceof Double || v instanceof Float) {
                         struct.put(Utils.filterAvroName(k), v);
+                    }else if (v instanceof Boolean) {
+                        struct.put(Utils.filterAvroName(k), v);
                     } else if (v instanceof List) {
 
                         if (!((List) v).isEmpty()) {
@@ -55,20 +57,22 @@ public class StructConverter {
                             struct.put(Utils.filterAvroName(k),new ArrayList<>());
                             if (item instanceof String) {
                                 struct.getArray(Utils.filterAvroName(k)).addAll((List) v);
+                            } else if (item instanceof Boolean) {
+                                struct.getArray(Utils.filterAvroName(k)).addAll((List) v);
                             } else if (item instanceof Integer || item instanceof Long) {
                                 struct.getArray(Utils.filterAvroName(k)).addAll((List) v);
                             } else if (item instanceof Double || item instanceof Float) {
                                 struct.getArray(Utils.filterAvroName(k)).addAll((List) v);
                             } else if (item instanceof Map) {
 
-                                List<Struct> array = (List<Struct>) ((List) v)
+                                List<Struct> array = ((List<Object>) v)
                                         .stream()
                                         .map(i -> {
-                                            Struct nestedStruct = new Struct(schema.field(Utils.filterAvroName(prefixName,k)).schema().valueSchema());
+                                            Struct nestedStruct = new Struct(schema.field(k).schema().valueSchema());
                                             convertDocumentStruct(
-                                                    Utils.filterAvroName(prefixName,k)+".",
                                                     (Map<String, Object>) i, nestedStruct, schema.field(Utils.filterAvroName(k)).schema().valueSchema());
                                             return nestedStruct;
+
                                         }).collect(Collectors.toCollection(ArrayList::new));
                                 struct.put(Utils.filterAvroName(k),array );
                             } else {
@@ -81,7 +85,6 @@ public class StructConverter {
 
                         Struct nestedStruct = new Struct(schema.field(Utils.filterAvroName(k)).schema());
                         convertDocumentStruct(
-                                Utils.filterAvroName(prefixName,k)+".",
                                 (Map<String, Object>) v,
                                 nestedStruct,
                                 schema.field(Utils.filterAvroName(k)).schema()

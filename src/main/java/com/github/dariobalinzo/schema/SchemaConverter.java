@@ -29,17 +29,18 @@ public class SchemaConverter {
 
         SchemaBuilder schemaBuilder = SchemaBuilder.struct().name(
                 Utils.filterAvroName("", name)); //characters not valid for avro schema name
-        convertDocumentSchema("", doc, schemaBuilder);
+        convertDocumentSchema(doc, schemaBuilder);
         return schemaBuilder.build();
 
     }
 
 
-    private static void convertDocumentSchema(String prefixName, Map<String, Object> doc, SchemaBuilder schemaBuilder) {
+    private static void convertDocumentSchema(Map<String, Object> doc, SchemaBuilder schemaBuilder) {
 
         doc.keySet().forEach(
                 k -> {
                     Object v = doc.get(k);
+
                     if (v instanceof String) {
                         schemaBuilder.field(Utils.filterAvroName(k), Schema.OPTIONAL_STRING_SCHEMA);
                     } else if (v instanceof Integer) {
@@ -50,7 +51,9 @@ public class SchemaConverter {
                         schemaBuilder.field(Utils.filterAvroName(k), Schema.OPTIONAL_FLOAT32_SCHEMA);
                     } else if (v instanceof Double) {
                         schemaBuilder.field(Utils.filterAvroName(k), Schema.OPTIONAL_FLOAT64_SCHEMA);
-                    } else if (v instanceof List) {
+                    } else if (v instanceof Boolean) {
+                        schemaBuilder.field(Utils.filterAvroName(k), Schema.OPTIONAL_BOOLEAN_SCHEMA);
+                    }else if (v instanceof List) {
 
                         if (!((List) v).isEmpty()) {
                             //assuming that every item of the list has the same schema
@@ -75,17 +78,24 @@ public class SchemaConverter {
                                         .optional()
                                         .build()
                                 ).build();
-                            } if (item instanceof Double ) {
+                            } else if (item instanceof Double ) {
                                 schemaBuilder.field(Utils.filterAvroName(k), SchemaBuilder.array(SchemaBuilder.OPTIONAL_FLOAT64_SCHEMA)
                                         .optional()
                                         .build()
                                 ).build();
-                            } else if (item instanceof Map) {
+                            }else if (item instanceof Boolean ) {
+                                schemaBuilder.field(Utils.filterAvroName(k), SchemaBuilder.array(SchemaBuilder.OPTIONAL_BOOLEAN_SCHEMA)
+                                        .optional()
+                                        .build()
+                                ).build();
+                            }
+
+                            else if (item instanceof Map) {
 
                                 SchemaBuilder nestedSchema = SchemaBuilder.struct()
-                                        .name(Utils.filterAvroName(prefixName, k))
+                                        .name(k)
                                         .optional();
-                                        convertDocumentSchema(Utils.filterAvroName(prefixName, k) + ".",
+                                        convertDocumentSchema(
                                         (Map<String, Object>) item,
                                         nestedSchema);
                                 schemaBuilder.field(Utils.filterAvroName(k), SchemaBuilder.array(nestedSchema.build()));
@@ -97,9 +107,9 @@ public class SchemaConverter {
 
                     } else if (v instanceof Map) {
 
-                        SchemaBuilder nestedSchema = SchemaBuilder.struct().name(Utils.filterAvroName(prefixName, k)).optional();
-                        convertDocumentSchema(Utils.filterAvroName(prefixName, k) + ".",
-                                (Map<String, Object>) v,
+
+                        SchemaBuilder nestedSchema = SchemaBuilder.struct().name(k).optional();
+                        convertDocumentSchema((Map<String, Object>) v,
                                         nestedSchema
                                 );
                         schemaBuilder.field(Utils.filterAvroName(k), nestedSchema.build());
