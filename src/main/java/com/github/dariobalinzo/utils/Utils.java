@@ -28,7 +28,7 @@ import java.util.List;
 
 public class Utils {
 
-    public static final Logger logger = LoggerFactory.getLogger(Utils.class);
+    private static final Logger logger = LoggerFactory.getLogger(Utils.class);
 
     public static List<List<String>> groupPartitions(List<String> currentIndices, int numGroups) {
         List<List<String>> result = new ArrayList<>(numGroups);

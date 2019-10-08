@@ -30,9 +30,9 @@ import java.io.IOException;
 
 public class ElasticConnection {
 
-    public final static Logger logger = LoggerFactory.getLogger(ElasticConnection.class);
+    private final static Logger logger = LoggerFactory.getLogger(ElasticConnection.class);
 
-    final RestHighLevelClient client;
+    private final RestHighLevelClient client;
     private final long connectionRetryBackoff;
     private final int maxConnectionAttempts;
 

@@ -259,7 +259,7 @@ public class ElasticSourceConnectorConfig extends AbstractConfig {
         );
     }
 
-    public ElasticSourceConnectorConfig(Map<String, String> properties) {
+    ElasticSourceConnectorConfig(Map<String, String> properties) {
 
         super(CONFIG_DEF, properties);
 
